@@ -1,22 +1,15 @@
 ## Hypervisor
 
-Visor Hypervisor active liquidity management contract.
+HyperVisor forked from visor
 
-### Audit
-[REP-Hypervisor-2021-07-07.pdf](https://github.com/VisorFinance/hypervisor/blob/master/REP-Hypervisor-2021-07-07.pdf)
+### Information for audit
 
-### Testing
+`Hypervisor`
 
-`npx hardhat test`
+This is the smart contract that manages user's positions. For each pair, a separate hypervisor is minted.
 
-To deploy, modify the parameters in `scripts/deploy_mainnet.sh` and run:
 
-`npx hardhat deploy_mainnet`
 
-To trigger a rebalance, run:
+#### Testnet Version (minified)
 
-`npx hardhat rebalance`
-
-#### Fork Test
-
-`npm run test`
+https://goerli.etherscan.io/address/0xda34F39a38d968A5aCc8B522393006663D2cbd82#code
