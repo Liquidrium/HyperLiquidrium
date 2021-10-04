@@ -18,11 +18,11 @@ import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import "../interfaces/IVault.sol";
 import "../interfaces/IUniversalVault.sol";
 
-// @title Hypervisor
+// @title HyperLiquidrium
 // @notice A Uniswap V2-like interface with fungible liquidity to Uniswap V3
 // which allows for arbitrary liquidity provision: one-sided, lop-sided, and
 // balanced.
-contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, ERC20 {
+contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, ERC20 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SignedSafeMath for int256;
@@ -62,7 +62,7 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
     uint256 constant public PRECISION = 1e36;
 
     // @param _pool Uniswap V3 pool for which liquidity is managed
-    // @param _owner Owner of the Hypervisor
+    // @param _owner Owner of the HyperLiquidrium
     constructor(
         address _pool,
         address _owner
@@ -83,8 +83,8 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
     // @notice Distributes shares to depositor equal to the token1 value of his
     // deposit multiplied by the ratio of total liquidity shares issued divided
     // by the pool's AUM measured in token1 value.
-    // @param deposit0 Amount of token0 transfered from sender to Hypervisor
-    // @param deposit1 Amount of token0 transfered from sender to Hypervisor
+    // @param deposit0 Amount of token0 transfered from sender to HyperLiquidrium
+    // @param deposit1 Amount of token0 transfered from sender to HyperLiquidrium
     // @param to Address to which liquidity tokens are minted
     // @return shares Quantity of liquidity tokens minted as a result of deposit
     function deposit(
@@ -131,7 +131,7 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
         require(maxTotalSupply == 0 || totalSupply() <= maxTotalSupply, "maxTotalSupply");
     }
 
-    // @notice Redeems shares by sending out a percentage of the hypervisor's
+    // @notice Redeems shares by sending out a percentage of the HyperLiquidrium's
     // AUM--this percentage is equal to the percentage of total issued shares
     // represented by the redeeemed shares.
     // @param shares Number of liquidity tokens to redeem as pool assets
@@ -146,6 +146,7 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
     ) external override returns (uint256 amount0, uint256 amount1) {
         require(shares > 0, "shares");
         require(to != address(0), "to");
+        require(from == msg.sender || IUniversalVault(from).owner() == msg.sender, "Sender must own the tokens");
 
         // Withdraw liquidity from Uniswap pool
         (uint256 base0, uint256 base1) =
@@ -163,13 +164,12 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
         amount0 = base0.add(limit0).add(unusedAmount0);
         amount1 = base1.add(limit1).add(unusedAmount1);
 
-        require(from == msg.sender || IUniversalVault(from).owner() == msg.sender, "Sender must own the tokens");
         _burn(from, shares);
 
         emit Withdraw(from, to, shares, amount0, amount1);
     }
 
-    // @notice Updates hypervisor's LP positions.
+    // @notice Updates HyperLiquidrium's LP positions.
     // @dev The base position is placed first with as much liquidity as
     // possible and is typically symmetric around the current price. This order
     // should use up all of one token, leaving some unused quantity of the
@@ -354,8 +354,8 @@ contract Hypervisor is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, E
         }
     }
 
-    // @return total0 Quantity of token0 in both positions and unused in the Hypervisor
-    // @return total1 Quantity of token1 in both positions and unused in the Hypervisor
+    // @return total0 Quantity of token0 in both positions and unused in the HyperLiquidrium
+    // @return total1 Quantity of token1 in both positions and unused in the HyperLiquidrium
     function getTotalAmounts() public view override returns (uint256 total0, uint256 total1) {
         (, uint256 base0, uint256 base1) = getBasePosition();
         (, uint256 limit0, uint256 limit1) = getLimitPosition();
