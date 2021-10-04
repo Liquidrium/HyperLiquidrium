@@ -5,9 +5,9 @@ import {IUniswapV3Factory} from '@uniswap/v3-core/contracts/interfaces/IUniswapV
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
-import {Hypervisor} from './Hypervisor.sol';
+import {HyperLiquidrium} from './HyperLiquidrium.sol';
 
-contract HypervisorFactory is Ownable {
+contract HyperLiquidriumFactory is Ownable {
     IUniswapV3Factory public uniswapV3Factory;
     mapping(address => mapping(address => mapping(uint24 => address))) public getHypervisor; // toke0, token1, fee -> hypervisor address
     address[] public allHypervisors;
@@ -38,7 +38,7 @@ contract HypervisorFactory is Ownable {
             pool = uniswapV3Factory.createPool(token0, token1, fee);
         }
         hypervisor = address(
-            new Hypervisor{salt: keccak256(abi.encodePacked(token0, token1, fee, tickSpacing))}(pool, owner())
+            new HyperLiquidrium{salt: keccak256(abi.encodePacked(token0, token1, fee, tickSpacing))}(pool, owner())
         );
 
         getHypervisor[token0][token1][fee] = hypervisor;
