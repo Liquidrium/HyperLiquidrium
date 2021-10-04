@@ -214,9 +214,9 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         _burnLiquidity(baseLower, baseUpper, baseLiquidity, address(this), true);
         _burnLiquidity(limitLower, limitUpper, limitLiquidity, address(this), true);
 
-        // transfer 10% of fees for VISR buybacks
-        if(fees0 > 0) token0.safeTransfer(feeRecipient, fees0.div(10));
-        if(fees1 > 0) token1.safeTransfer(feeRecipient, fees1.div(10));
+        // transfer 15% of fees for Liquidrium buybacks
+        if(fees0 > 0) token0.safeTransfer(feeRecipient, fees0.div(15)); 
+        if(fees1 > 0) token1.safeTransfer(feeRecipient, fees1.div(15));
 
         emit Rebalance(
             currentTick(),
