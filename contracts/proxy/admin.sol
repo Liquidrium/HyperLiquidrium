@@ -69,6 +69,9 @@ contract Admin {
     /* user events */
     event OwnerTransferPrepared(address hypervisor, address newOwner, address admin, uint256 timestamp);
     event OwnerTransferFullfilled(address hypervisor, address newOwner, address admin, uint256 timestamp);
+    event AdminTransfer(address newAdmin, uint256 timestamp);
+    event AdvisorTransfer(address newAdmin, uint256 timestamp);
+    event RescueTokens(IERC20 token, address recipient, uint256 value);
 
     address public admin;
     address public advisor;
@@ -109,10 +112,13 @@ contract Admin {
 
     function transferAdmin(address newAdmin) external onlyAdmin {
         admin = newAdmin;
+        emit AdminTransfer(newAdmin, block.timestamp);
     }
 
     function transferAdvisor(address newAdvisor) external onlyAdmin {
         advisor = newAdvisor;
+        emit AdvisorTransfer(newAdvisor, block.timestamp);
+
     }
 
     function prepareHVOwnertransfer(address _hypervisor, address newOwner) external onlyAdmin {
@@ -131,6 +137,7 @@ contract Admin {
 
     function rescueERC20(IERC20 token, address recipient) external nonReentrant onlyAdmin {
         require(token.transfer(recipient, token.balanceOf(address(this))));
+        emit RescueTokens(token,recipient,token.balanceOf(address(this)));
     }
 
 }
