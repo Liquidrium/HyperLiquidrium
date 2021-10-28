@@ -18,6 +18,66 @@ import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import "../interfaces/IVault.sol";
 import "../interfaces/IUniversalVault.sol";
 
+
+/**
+ * @dev Contract module that helps prevent reentrant calls to a function.
+ *
+ * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
+ * available, which can be applied to functions to make sure there are no nested
+ * (reentrant) calls to them.
+ *
+ * Note that because there is a single `nonReentrant` guard, functions marked as
+ * `nonReentrant` may not call one another. This can be worked around by making
+ * those functions `private`, and then adding `external` `nonReentrant` entry
+ * points to them.
+ *
+ * TIP: If you would like to learn more about reentrancy and alternative ways
+ * to protect against it, check out our blog post
+ * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
+ */
+abstract contract ReentrancyGuard {
+    // Booleans are more expensive than uint256 or any type that takes up a full
+    // word because each write operation emits an extra SLOAD to first read the
+    // slot's contents, replace the bits taken up by the boolean, and then write
+    // back. This is the compiler's defense against contract upgrades and
+    // pointer aliasing, and it cannot be disabled.
+
+    // The values being non-zero value makes deployment a bit more expensive,
+    // but in exchange the refund on every call to nonReentrant will be lower in
+    // amount. Since refunds are capped to a percentage of the total
+    // transaction's gas, it is best to keep them low in cases like this one, to
+    // increase the likelihood of the full refund coming into effect.
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor() {
+        _status = _NOT_ENTERED;
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and making it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _status = _ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _status = _NOT_ENTERED;
+    }
+}
+
 // @title HyperLiquidrium
 // @notice A Uniswap V2-like interface with fungible liquidity to Uniswap V3
 // which allows for arbitrary liquidity provision: one-sided, lop-sided, and
@@ -29,11 +89,11 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
 
     address public owner;
 
-    IUniswapV3Pool public pool;
-    IERC20 public token0;
-    IERC20 public token1;
-    uint24 public fee;
-    int24 public tickSpacing;
+    IUniswapV3Pool public immutable pool;
+    IERC20 public immutable token0;
+    IERC20 public immutable token1;
+    uint24 public immutable fee;
+    int24 public immutable tickSpacing;
 
     int24 public baseLower;
     int24 public baseUpper;
@@ -60,6 +120,11 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
     uint256 public maxTotalSupply;
 
     uint256 constant public PRECISION = 1e36;
+
+
+    event NewMaxSupply(uint256 newSupply);
+    event TokensDepositMax(uint256 token0Max, uint256 token1Max);
+
 
     // @param _pool Uniswap V3 pool for which liquidity is managed
     // @param _owner Owner of the HyperLiquidrium
@@ -91,7 +156,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         uint256 deposit0,
         uint256 deposit1,
         address to
-    ) external override returns (uint256 shares) {
+    ) external nonReentrant override returns (uint256 shares) {
         require(deposit0 > 0 || deposit1 > 0, "deposits must be nonzero");
         require(deposit0 < deposit0Max && deposit1 < deposit1Max, "deposits must be less than maximum amounts");
         require(to != address(0) && to != address(this), "to");
@@ -143,7 +208,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         uint256 shares,
         address to,
         address from
-    ) external override returns (uint256 amount0, uint256 amount1) {
+    ) external nonReentrant override returns (uint256 amount0, uint256 amount1) {
         require(shares > 0, "shares");
         require(to != address(0), "to");
         require(from == msg.sender || IUniversalVault(from).owner() == msg.sender, "Sender must own the tokens");
@@ -189,7 +254,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         int24 _limitUpper,
         address feeRecipient,
         int256 swapQuantity
-    ) external override onlyOwner {
+    ) external nonReentrant override onlyOwner {
         require(_baseLower < _baseUpper && _baseLower % tickSpacing == 0 && _baseUpper % tickSpacing == 0,
                 "base position invalid");
         require(_limitLower < _limitUpper && _limitLower % tickSpacing == 0 && _limitUpper % tickSpacing == 0,
@@ -215,8 +280,8 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         _burnLiquidity(limitLower, limitUpper, limitLiquidity, address(this), true);
 
         // transfer 15% of fees for Liquidrium buybacks
-        if(fees0 > 0) token0.safeTransfer(feeRecipient, fees0.div(15)); 
-        if(fees1 > 0) token1.safeTransfer(feeRecipient, fees1.div(15));
+        if(fees0 > 0) token0.safeTransfer(feeRecipient, fees0.mul(3).div(20)); 
+        if(fees1 > 0) token1.safeTransfer(feeRecipient, fees1.mul(3).div(20));
 
         emit Rebalance(
             currentTick(),
@@ -319,7 +384,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         uint256 amount1,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(pool));
+        require(msg.sender == address(pool), "not pool");
         address payer = abi.decode(data, (address));
 
         if (payer == address(this)) {
@@ -336,7 +401,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
         int256 amount1Delta,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(pool));
+        require(msg.sender == address(pool), "not pool");
         address payer = abi.decode(data, (address));
 
         if (amount0Delta > 0) {
@@ -450,6 +515,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
     // @param _maxTotalSupply The maximum liquidity token supply the contract allows
     function setMaxTotalSupply(uint256 _maxTotalSupply) external onlyOwner {
         maxTotalSupply = _maxTotalSupply;
+        emit NewMaxSupply(_maxTotalSupply);
     }
 
     // @param _deposit0Max The maximum amount of token0 allowed in a deposit
@@ -457,6 +523,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
     function setDepositMax(uint256 _deposit0Max, uint256 _deposit1Max) external onlyOwner {
         deposit0Max = _deposit0Max;
         deposit1Max = _deposit1Max;
+        emit TokensDepositMax(_deposit0Max, _deposit1Max);
     }
 
     modifier onlyOwner {
