@@ -1,6 +1,6 @@
 pragma solidity 0.7.6;
 
-import "../../interfaces/IHypervisor.sol";
+import "../../interfaces/IHyperLiquidrium.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Admin {
