@@ -129,14 +129,14 @@ contract Admin {
 
     function fullfillHVOwnertransfer(address _hypervisor, address newOwner) external onlyAdmin {
         OwnershipData storage data = hypervisorOwner[_hypervisor];
-        require(data.newOwner == newOwner && data.lastUpdatedTime != 0 && data.lastUpdatedTime < block.timestamp);
+        require(data.newOwner == newOwner && data.lastUpdatedTime != 0 && data.lastUpdatedTime < block.timestamp, "owner or update time wrong");
         IHypervisor(_hypervisor).transferOwnership(newOwner);
         delete hypervisorOwner[_hypervisor];
         emit OwnerTransferFullfilled(_hypervisor, newOwner, admin, block.timestamp);
     }
 
     function rescueERC20(IERC20 token, address recipient) external nonReentrant onlyAdmin {
-        require(token.transfer(recipient, token.balanceOf(address(this))));
+        require(token.transfer(recipient, token.balanceOf(address(this))), "transfer failed");
         emit RescueTokens(token,recipient,token.balanceOf(address(this)));
     }
 
