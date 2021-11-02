@@ -66,7 +66,7 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract HyperLiquidriumFactory is Ownable {
+contract HyperLiquidriumFactory is Ownable, ReentrancyGuard  {
     IUniswapV3Factory public immutable uniswapV3Factory;
     mapping(address => mapping(address => mapping(uint24 => address))) public getHyperLiquidrium; // toke0, token1, fee -> hyperliquidrium address
     address[] public allHyperLiquidriums;
