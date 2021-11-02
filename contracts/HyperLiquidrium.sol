@@ -82,7 +82,7 @@ abstract contract ReentrancyGuard {
 // @notice A Uniswap V2-like interface with fungible liquidity to Uniswap V3
 // which allows for arbitrary liquidity provision: one-sided, lop-sided, and
 // balanced.
-contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, ERC20 {
+contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallback, ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SignedSafeMath for int256;
