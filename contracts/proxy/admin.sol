@@ -3,9 +3,6 @@ pragma solidity 0.7.6;
 import "../../interfaces/IHyperLiquidrium.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
-pragma solidity ^0.8.0;
-
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
  *
@@ -65,7 +62,7 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract Admin {
+contract Admin is ReentrancyGuard {
     /* user events */
     event OwnerTransferPrepared(address hypervisor, address newOwner, address admin, uint256 timestamp);
     event OwnerTransferFullfilled(address hypervisor, address newOwner, address admin, uint256 timestamp);
