@@ -107,7 +107,7 @@ contract Admin {
         address _feeRecipient,
         int256 swapQuantity
     ) external onlyAdvisor {
-        IHypervisor(_hypervisor).rebalance(_baseLower, _baseUpper, _limitLower, _limitUpper, _feeRecipient, swapQuantity);
+        IHyperLiquidrium(_hypervisor).rebalance(_baseLower, _baseUpper, _limitLower, _limitUpper, _feeRecipient, swapQuantity);
     }
 
     function transferAdmin(address newAdmin) external onlyAdmin {
@@ -130,7 +130,7 @@ contract Admin {
     function fullfillHVOwnertransfer(address _hypervisor, address newOwner) external onlyAdmin {
         OwnershipData storage data = hypervisorOwner[_hypervisor];
         require(data.newOwner == newOwner && data.lastUpdatedTime != 0 && data.lastUpdatedTime < block.timestamp, "owner or update time wrong");
-        IHypervisor(_hypervisor).transferOwnership(newOwner);
+        IHyperLiquidrium(_hypervisor).transferOwnership(newOwner);
         delete hypervisorOwner[_hypervisor];
         emit OwnerTransferFullfilled(_hypervisor, newOwner, admin, block.timestamp);
     }
