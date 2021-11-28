@@ -502,9 +502,20 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
             );
     }
 
-    // @return tick Uniswap pool's current price tick
     function currentTick() public view returns (int24 tick) {
-        (, tick, , , , , ) = pool.slot0();
+        int24 _tick = getTwap();
+        return tick;
+    }
+
+        /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
+    function getTwap() public view returns (int24) {
+        uint32 _twapDuration = 60; // 60 seconds
+        uint32[] memory secondsAgo = new uint32[](2);
+        secondsAgo[0] = _twapDuration;
+        secondsAgo[1] = 0;
+
+        (int56[] memory tickCumulatives, ) = pool.observe(secondsAgo);
+        return int24((tickCumulatives[1] - tickCumulatives[0]) / _twapDuration);
     }
 
     function _uint128Safe(uint256 x) internal pure returns (uint128) {
