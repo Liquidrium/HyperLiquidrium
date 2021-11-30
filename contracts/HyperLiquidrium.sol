@@ -504,7 +504,7 @@ contract HyperLiquidrium is IVault, IUniswapV3MintCallback, IUniswapV3SwapCallba
 
     function currentTick() public view returns (int24 tick) {
         int24 _tick = getTwap();
-        return tick;
+        return _tick;
     }
 
         /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
